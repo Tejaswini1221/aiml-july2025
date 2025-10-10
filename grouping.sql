@@ -1,0 +1,187 @@
+-- select
+--     sum(cust_credit_limit) as total,
+--     avg(cust_credit_limit) as avg,
+--     min(cust_credit_limit) as min,
+--     max(cust_credit_limit) as max
+-- from sh.customers;
+
+-- select
+--     cust_income_level,
+--     count(*) as cust_count
+-- from sh.CUSTOMERS
+-- group by cust_income_level
+-- order by cust_income_level;
+
+-- SELECT 
+--     cust_country_name,
+--     cust_city, 
+--     SUM(cust_credit_limit) AS total_credit_limit
+-- FROM 
+--     sh.customers
+-- GROUP BY 
+--     cust_country_name, cust_city 
+-- ORDER BY 
+--     cust_country_name, cust_city;
+
+-- SELECT
+--   cust_marital_status,
+--   cust_gender,
+--   AVG(cust_credit_limit) AS avg_credit_limit,
+--   COUNT(*) AS customer_count
+-- FROM sh.customers
+-- GROUP BY cust_marital_status, cust_gender
+-- ORDER BY cust_marital_status, cust_gender;
+
+-- SELECT cust_city, AVG(cust_credit_limit) AS avg_credit_limit
+-- FROM sh.customers
+-- GROUP BY cust_city
+-- ORDER BY avg_credit_limit DESC
+-- FETCH FIRST 3 ROWS ONLY;
+
+-- SELECT ctry.country_name,
+--        SUM(cust.cust_credit_limit) AS total_credit_limit
+-- FROM sh.customers cust
+-- JOIN sh.countries ctry ON cust.cust_country_id = ctry.country_id
+-- GROUP BY ctry.country_name
+-- ORDER BY total_credit_limit DESC
+-- FETCH FIRST 1 ROW ONLY;
+
+-- SELECT
+--     COUNT(*) AS NUM_CUSTOMERS_ABOVE_STATE_AVG
+-- FROM
+--     (
+--         SELECT
+--             CUST_ID,
+--             CUST_CREDIT_LIMIT,
+--             AVG(CUST_CREDIT_LIMIT)
+--             OVER(PARTITION BY CUST_city) AS STATE_AVG
+--         FROM
+--             SH.CUSTOMERS
+--     ) T
+-- WHERE
+--     T.CUST_CREDIT_LIMIT IS NOT NULL
+--     AND T.CUST_CREDIT_LIMIT > T.STATE_AVG;
+
+-- SELECT cust_city,
+--        COUNT(*) AS customer_count
+-- FROM sh.customers
+-- GROUP BY cust_city
+-- HAVING COUNT(*) > 50
+-- ORDER BY customer_count DESC;
+
+-- WITH country_avg AS (
+--   SELECT cust_country_id,
+--          AVG(cust_credit_limit) AS avg_credit
+--   FROM sh.customers
+--   GROUP BY cust_country_id
+-- ),
+-- global_avg AS (
+--   SELECT AVG(cust_credit_limit) AS global_avg FROM sh.customers
+-- )
+-- SELECT ctry.country_name, ca.avg_credit
+-- FROM country_avg ca
+-- JOIN sh.countries ctry ON ca.cust_country_id = ctry.country_id
+-- CROSS JOIN global_avg g
+-- WHERE ca.avg_credit > g.global_avg
+-- ORDER BY ca.avg_credit DESC;
+
+-- SELECT ctry.country_name,
+--        COUNT(*) AS cnt,
+--        VAR_POP(cust.cust_credit_limit)  AS variance_population,
+--        VAR_SAMP(cust.cust_credit_limit) AS variance_sample,
+--        STDDEV_POP(cust.cust_credit_limit) AS stddev_population,
+--        STDDEV(cust.cust_credit_limit)     AS stddev_sample
+-- FROM sh.customers cust
+-- JOIN sh.countries ctry ON cust.cust_country_id = ctry.country_id
+-- GROUP BY ctry.country_name
+-- ORDER BY ctry.country_name;
+
+-- SELECT cust_state,
+--        (MAX(cust_credit_limit) - MIN(cust_credit_limit)) AS credit_range
+-- FROM sh.customers
+-- GROUP BY cust_state
+-- ORDER BY credit_range ASC
+-- FETCH FIRST 1 ROW ONLY;
+
+-- SELECT
+--   cust_income_level,
+--   COUNT(*) AS num_customers,
+--   ROUND( (COUNT(*) / SUM(COUNT(*)) OVER () ) * 100, 2 ) AS pct_of_total
+-- FROM sh.customers
+-- GROUP BY cust_income_level
+-- ORDER BY num_customers DESC;
+
+-- SELECT
+--   cust_income_level,
+--   COUNT(*) AS total_customers,
+--   SUM(CASE WHEN cust_credit_limit IS NULL THEN 1 ELSE 0 END) AS null_credit_count
+-- FROM sh.customers
+-- GROUP BY cust_income_level
+-- ORDER BY null_credit_count DESC;
+
+-- SELECT ctry.country_name,
+--        SUM(cust.cust_credit_limit) AS total_credit_limit
+-- FROM sh.customers cust
+-- JOIN sh.countries ctry ON cust.cust_country_id = ctry.country_id
+-- GROUP BY ctry.country_name
+-- HAVING SUM(cust.cust_credit_limit) > 10000000
+-- ORDER BY total_credit_limit DESC;
+
+-- WITH state_country_sums AS (
+--   SELECT cust_country_id,
+--          cust_state,
+--          SUM(cust_credit_limit) AS state_total
+--   FROM sh.customers
+--   GROUP BY cust_country_id, cust_state
+-- ),
+-- ranked AS (
+--   SELECT scs.*,
+--          ROW_NUMBER() OVER (PARTITION BY scs.cust_country_id ORDER BY scs.state_total DESC) AS rn
+--   FROM state_country_sums scs
+-- )
+-- SELECT ctry.country_name, r.cust_state, r.state_total
+-- FROM ranked r
+-- JOIN sh.countries ctry ON r.cust_country_id = ctry.country_id
+-- WHERE r.rn = 1
+-- ORDER BY ctry.country_name;
+
+-- SELECT EXTRACT(YEAR FROM cust_dob) AS birth_year,
+--        SUM(cust_credit_limit) AS total_credit_limit,
+--        COUNT(*) AS customer_count
+-- FROM sh.customers
+-- WHERE cust_dob IS NOT NULL
+-- GROUP BY EXTRACT(YEAR FROM cust_dob)
+-- ORDER BY total_credit_limit DESC;
+
+-- WITH country_max AS (
+--   SELECT cust_country_id,
+--          MAX(cust_credit_limit) AS max_credit
+--   FROM sh.customers
+--   GROUP BY cust_country_id
+-- )
+-- SELECT cust.*
+-- FROM sh.customers cust
+-- JOIN country_max cm
+--   ON cust.cust_country_id = cm.cust_country_id
+--  AND cust.cust_credit_limit = cm.max_credit
+-- ORDER BY cust.cust_country_id;
+
+-- SELECT ctry.country_name,
+--        MAX(cust.cust_credit_limit) AS max_credit,
+--        AVG(cust.cust_credit_limit) AS avg_credit,
+--        (MAX(cust.cust_credit_limit) - AVG(cust.cust_credit_limit)) AS max_minus_avg
+-- FROM sh.customers cust
+-- JOIN sh.countries ctry ON cust.cust_country_id = ctry.country_id
+-- GROUP BY ctry.country_name
+-- ORDER BY max_minus_avg DESC;
+
+-- SELECT cust_city,
+--        state_total,
+--        RANK() OVER (ORDER BY state_total DESC) AS state_rank
+-- FROM (
+--   SELECT cust_city,
+--          SUM(cust_credit_limit) AS state_total
+--   FROM sh.customers
+--   GROUP BY cust_city
+-- ) t
+-- ORDER BY state_rank;
